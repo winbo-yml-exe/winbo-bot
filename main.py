@@ -1,10 +1,13 @@
-import nextcord
 import random
+import json
+import os
+from pathlib import Path
+import nextcord
 from nextcord.ext import commands
 
 intents = nextcord.Intents.all()
 client = commands.Bot(intents=intents)
-
+serverdb = {}
 sad_stories = [
     "Winbo found a note in his mailbox: \"I’m sorry I couldn’t stay. Goodbye.\" He never saw his friend again.",
     "Winbo celebrated his birthday alone, his closest friends having forgotten the day entirely.",
@@ -14,11 +17,45 @@ sad_stories = [
     "Winbo looked at the last photo taken with his family before they drifted apart. The image was a bittersweet memory of happier times.",
     "Winbo’s phone remained silent, filled with messages from friends he could no longer reach. The emptiness of unreturned calls was deafening."
 ]
+try:
+    if not os.path.isfile("serverdb.json"):
+        with open("serverdb.json", "w", encoding="utf-8") as sdbfile:
+            json.dump(serverdb, sdbfile, indent=2)
+            print("Created serverdb.json")
+    else:
+        with open("serverdb.json", "r", encoding="utf-8") as sdbfile:
+            serverdb = json.load(sdbfile)
+            print("Loaded serverdb.json")
+except:
+    pass
 
 @client.event
 async def on_ready():
     print(f"Logged in as \"{client.user}\"")
-
+@client.event
+async def on_message(message):
+    embed = nextcord.Embed(title=f"Message by {message.author}")
+    if not message.author.bot and not message.content.startswith("/"):
+        for server in serverdb:
+            if str(message.channel.id) == str(serverdb[server]["cgcchannel"]):
+                for server in serverdb:
+                    try:
+                        channel = client.get_channel(int(serverdb[server]["cgcchannel"]))
+                        embed.description = message.content
+                        if message.reference:
+                            reference = await message.channel.fetch_message(message.reference.message_id)
+                            if reference.embeds:
+                                embed.add_field(name=f"Original message by {reference.embeds[0].title.split(' ')[-1]}", value=reference.embeds[0].description)
+                            else:
+                                embed.add_field(name=f"Original message by {reference.author}", value=reference.content)
+                        await channel.send(embed=embed)
+                    except Exception as excp:
+                        print(excp)
+                        pass
+                try:
+                    await message.delete()
+                except:
+                    pass
 @client.slash_command(name="ping", description="Replies with pong!")
 async def ping(interaction: nextcord.Interaction):
     await interaction.response.send_message(f"Pong 🏓 {client.latency * 1000:.2f}ms")
@@ -36,8 +73,11 @@ async def mute(ctx: nextcord.Interaction, member: nextcord.Member, reason: str =
             mute_role = await ctx.guild.create_role(name="Muted")
             for channel in ctx.guild.channels:
                 await channel.set_permissions(mute_role, send_messages=False, speak=False)
-        await member.add_roles(mute_role, reason=reason)
-        await ctx.send(f"Muted {member.mention} for {reason}")
+        if mute_role in member.roles:
+            await ctx.send(f"{member.mention} is already muted!")
+        else:
+            await member.add_roles(mute_role, reason=reason)
+            await ctx.send(f"Muted {member.mention} for {reason}")
     else:
         await ctx.send("You do not have permission to mute members.")
 
@@ -45,7 +85,7 @@ async def mute(ctx: nextcord.Interaction, member: nextcord.Member, reason: str =
 async def unmute(ctx: nextcord.Interaction, member: nextcord.Member):
     if ctx.user.guild_permissions.manage_roles:
         mute_role = nextcord.utils.get(ctx.guild.roles, name="Muted")
-        if mute_role:
+        if mute_role in member.roles:
             await member.remove_roles(mute_role)
             await ctx.response.send_message(f"Unmuted {member.mention}")
         else:
@@ -69,14 +109,6 @@ async def unban(ctx: nextcord.Interaction, user_id: str):
         await ctx.response.send_message(f"Unbanned {user.mention}")
     else:
         await ctx.response.send_message("You do not have permission to unban members.")
-
-@client.slash_command(name="clear", description="Deletes all messages from a channel (may error but still work if above 100)")
-async def clear(ctx: nextcord.Interaction, amount: int):
-    if ctx.user.guild_permissions.manage_messages:
-        deleted = await ctx.channel.purge()
-        await ctx.response.send_message(f"Deleted {len(deleted) - 1} messages.")
-    else:
-        await ctx.response.send_message("You do not have permission to manage messages.")
     
 @client.slash_command(name="purge", description="Deletes a number of messages")
 async def purge(ctx: nextcord.Interaction, amount: int):
@@ -85,6 +117,36 @@ async def purge(ctx: nextcord.Interaction, amount: int):
         await ctx.response.send_message(f"Deleted {len(deleted) - 1} messages.")
     else:
         await ctx.response.send_message("You do not have permission to manage messages.")
+@client.slash_command()
+async def cgc(interaction: nextcord.Interaction):
+    pass
+@cgc.subcommand(description="Set the current channel for Cross-Guild chatting.")
+async def set(interaction: nextcord.Interaction):
+    try:
+        if serverdb[str(interaction.guild.id)]:
+            serverdb[str(interaction.guild.id)]["cgcchannel"] = str(interaction.channel.id)
+        else:
+            serverdb[str(interaction.guild.id)] = {
 
+            }
+            serverdb[str(interaction.guild.id)]["cgcchannel"] = str(interaction.channel.id)
+    except:
+        serverdb[str(interaction.guild.id)] = {
+
+        }
+        serverdb[str(interaction.guild.id)]["cgcchannel"] = str(interaction.channel.id)
+    serverdb[str(interaction.guild.id)]["cgcchannel"] = str(interaction.channel.id)
+    await interaction.send("Set channel for CGC-chatting successfully!")
+    with open("serverdb.json", "w", encoding="utf-8") as sdbfile:
+        json.dump(serverdb, sdbfile, indent=2)
+@cgc.subcommand(description="Unset the current channel for Cross-Guild chatting.")
+async def unset(interaction:nextcord.Interaction):
+    try:
+        serverdb[str(interaction.guild.id)]["cgcchannel"] = "None"
+    except:
+        pass
+    await interaction.send("Unset channel for CGC-chatting successfully!")
+    with open("serverdb.json", "w", encoding="utf-8") as sdbfile:
+        json.dump(serverdb, sdbfile, indent=2)
 
 client.run("TOKEN_GOES_HERE")
