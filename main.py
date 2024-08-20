@@ -46,13 +46,13 @@ try:
 except:
     cgcdb["bans"] = []
 with open("owner.txt", "r", encoding="utf-8") as ownerfile:
-    owner = str(ownerfile.read())
+    owner = str(ownerfile.read().rstrip())
     cgcdb["owner"] = owner
     with open("cgcdb.json", "w", encoding="utf-8") as cgcdbfile:
         json.dump(cgcdb, cgcdbfile, indent=2)
         print("Loaded owner.txt")
 with open("staff.txt", "r", encoding="utf-8") as stafffile:
-    staff = str(stafffile.read()).split(", ")
+    staff = str(stafffile.read().rstrip()).split(", ")
     cgcdb["staff"] = staff
     with open("cgcdb.json", "w", encoding="utf-8") as cgcdbfile:
         json.dump(cgcdb, cgcdbfile, indent=2)
