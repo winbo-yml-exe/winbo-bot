@@ -1,10 +1,10 @@
 import random
 import json
 import os
+import glob
 from pathlib import Path
 import nextcord
 from nextcord.ext import commands
-
 intents = nextcord.Intents.all()
 client = commands.Bot(intents=intents)
 serverdb = {}
@@ -86,7 +86,19 @@ async def send_message_to_servers(message, server):
                             embed.add_field(name=f"Original message by {reference.embeds[0].title.split(' ')[-1]}", value=reference.embeds[0].description)
                         else:
                             embed.add_field(name=f"Original message by {reference.author}", value=reference.content)
-                    await channel.send(embed=embed)
+                    if message.attachments:
+                        if message.attachments[-1].filename.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.mp4')):
+                            await message.attachments[-1].save(message.attachments[-1].filename)
+                        if message.attachments[-1].filename.lower().endswith(('.png', '.jpg', '.jpeg', '.gif')):
+                            attachment = nextcord.File(message.attachments[-1].filename, filename="image.gif")
+                            embed.set_image(url="attachment://image.gif")
+                            await channel.send(embed=embed, file=attachment)
+                        else:
+                            attachment = nextcord.File(message.attachments[-1].filename, filename="image.mp4")
+                            await channel.send(embed=embed, file=attachment)
+                        os.remove(message.attachments[-1].filename)
+                    else:
+                        await channel.send(embed=embed)
                 except Exception as excp:
                     print(excp)
                     pass
