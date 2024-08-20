@@ -66,8 +66,8 @@ async def on_ready():
 async def on_message(message):
     if not message.author.bot and not message.content.startswith("/") and not str(message.author.id) in cgcdb["bans"]:
         for server in serverdb:
-            await send_message_to_servers(message)
-async def send_message_to_servers(message):
+            await send_message_to_servers(message, server)
+async def send_message_to_servers(message, server):
         embed = nextcord.Embed(title=f"Message by {message.author}")
         if str(message.channel.id) == str(serverdb[server]["cgcchannel"]):
             for server in serverdb:
