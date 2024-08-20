@@ -41,16 +41,10 @@ try:
 except:
     pass
 try:
-    if cgcdb:
-        try:
-            if not cgcdb["bans"]:
-                cgcdb["bans"] = []
-            else:
-                pass
-        except:
-          cgcdb["bans"] = []
+    if cgcdb["bans"]:
+        cgcdb["bans"] = []
 except:
-    pass
+    cgcdb["bans"] = []
 with open("owner.txt", "r", encoding="utf-8") as ownerfile:
     owner = str(ownerfile.read())
     cgcdb["owner"] = owner
@@ -70,9 +64,9 @@ async def on_ready():
 
 @client.event
 async def on_message(message):
-    embed = nextcord.Embed(title=f"Message by {message.author}")
     if not message.author.bot and not message.content.startswith("/") and not str(message.author.id) in cgcdb["bans"]:
         for server in serverdb:
+            embed = nextcord.Embed(title=f"Message by {message.author}")
             if str(message.channel.id) == str(serverdb[server]["cgcchannel"]):
                 for server in serverdb:
                     try:
