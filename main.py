@@ -159,7 +159,7 @@ async def purge(ctx: nextcord.Interaction, amount: int):
     else:
         await ctx.response.send_message("You do not have permission to manage messages.")
 
-@client.slash_command()
+@client.slash_command(name="warn", description="Warns a member")
 async def warn(interaction: nextcord.Interaction, member: nextcord.Member, reason: str):
     try:
         if serverdb[str(interaction.guild.id)]:
@@ -188,7 +188,7 @@ async def warn(interaction: nextcord.Interaction, member: nextcord.Member, reaso
         json.dump(serverdb, sdbfile, indent=2)
     await interaction.send(f"Warned {member.mention} for {reason}")
 
-@client.slash_command()
+@client.slash_command(name="warns", description="Checks all warns given to a member")
 async def warns(interaction: nextcord.Interaction, member: nextcord.Member):
     try:
         if serverdb[str(interaction.guild.id)]:
@@ -215,7 +215,7 @@ async def warns(interaction: nextcord.Interaction, member: nextcord.Member):
     embed = nextcord.Embed(color=nextcord.Colour.red(), title=f"{member}'s warnings ({len(serverdb[str(interaction.guild.id)]['warns'][str(member.id)])})", description=", ".join(serverdb[str(interaction.guild.id)]['warns'][str(member.id)]))
     await interaction.send(embed=embed)
 
-@client.slash_command()
+@client.slash_command(name="unwarn", description="Removes a warn from a member")
 async def unwarn(interaction: nextcord.Interaction, member: nextcord.Member, warningreason: str):
     try:
         if serverdb[str(interaction.guild.id)]:
@@ -249,7 +249,7 @@ async def unwarn(interaction: nextcord.Interaction, member: nextcord.Member, war
         embed = nextcord.Embed(color=nextcord.Colour.red(), title="Couldn't find such a warning", description=f"Couldn't find '{warningreason}' in {member}'s warnings.")
         await interaction.send(embed=embed)
 
-@client.slash_command()
+@client.slash_command(name="clearwarns", description="Clears all warns given to a member")
 async def clearwarns(interaction: nextcord.Interaction, member: nextcord.Member):
     try:
         serverdb[str(interaction.guild.id)]["warns"][str(member.id)] = []
