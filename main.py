@@ -63,9 +63,11 @@ with open("staff.txt", "r", encoding="utf-8") as stafffile:
     with open("cgcdb.json", "w", encoding="utf-8") as cgcdbfile:
         json.dump(cgcdb, cgcdbfile, indent=2)
         print(f"Loaded staff.txt ({staff})")
+
 @client.event
 async def on_ready():
     print(f"Logged in as \"{client.user}\"")
+
 @client.event
 async def on_message(message):
     embed = nextcord.Embed(title=f"Message by {message.author}")
@@ -156,6 +158,7 @@ async def purge(ctx: nextcord.Interaction, amount: int):
         await ctx.response.send_message(f"Deleted {len(deleted) - 1} messages.")
     else:
         await ctx.response.send_message("You do not have permission to manage messages.")
+
 @client.slash_command()
 async def warn(interaction: nextcord.Interaction, member: nextcord.Member, reason: str):
     try:
@@ -184,6 +187,7 @@ async def warn(interaction: nextcord.Interaction, member: nextcord.Member, reaso
     with open("serverdb.json", "w", encoding="utf-8") as sdbfile:
         json.dump(serverdb, sdbfile, indent=2)
     await interaction.send(f"Warned {member.mention} for {reason}")
+
 @client.slash_command()
 async def warns(interaction: nextcord.Interaction, member: nextcord.Member):
     try:
@@ -210,6 +214,7 @@ async def warns(interaction: nextcord.Interaction, member: nextcord.Member):
         serverdb[str(interaction.guild.id)]["warns"][str(member.id)] = []
     embed = nextcord.Embed(color=nextcord.Colour.red(), title=f"{member}'s warnings ({len(serverdb[str(interaction.guild.id)]['warns'][str(member.id)])})", description=", ".join(serverdb[str(interaction.guild.id)]['warns'][str(member.id)]))
     await interaction.send(embed=embed)
+
 @client.slash_command()
 async def unwarn(interaction: nextcord.Interaction, member: nextcord.Member, warningreason: str):
     try:
@@ -243,6 +248,7 @@ async def unwarn(interaction: nextcord.Interaction, member: nextcord.Member, war
     else:
         embed = nextcord.Embed(color=nextcord.Colour.red(), title="Couldn't find such a warning", description=f"Couldn't find '{warningreason}' in {member}'s warnings.")
         await interaction.send(embed=embed)
+
 @client.slash_command()
 async def clearwarns(interaction: nextcord.Interaction, member: nextcord.Member):
     try:
@@ -253,6 +259,7 @@ async def clearwarns(interaction: nextcord.Interaction, member: nextcord.Member)
 @client.slash_command()
 async def cgc(interaction: nextcord.Interaction):
     pass
+
 @cgc.subcommand(description="Set the current channel for Cross-Guild chatting.")
 async def set(interaction: nextcord.Interaction):
     try:
@@ -268,6 +275,7 @@ async def set(interaction: nextcord.Interaction):
     await interaction.send("Set channel for CGC-chatting successfully!")
     with open("serverdb.json", "w", encoding="utf-8") as sdbfile:
         json.dump(serverdb, sdbfile, indent=2)
+
 @cgc.subcommand(description="Unset the current channel for Cross-Guild chatting.")
 async def unset(interaction: nextcord.Interaction):
     try:
@@ -277,6 +285,7 @@ async def unset(interaction: nextcord.Interaction):
     await interaction.send("Unset channel for CGC-chatting successfully!")
     with open("serverdb.json", "w", encoding="utf-8") as sdbfile:
         json.dump(serverdb, sdbfile, indent=2)
+
 @cgc.subcommand(description="Ban a user from Cross-Guild chatting using this bot")
 async def ban(interaction: nextcord.Interaction, member: nextcord.Member):
     if str(interaction.user.id) in cgcdb["staff"] or str(interaction.user.id) == cgcdb["owner"]:
@@ -305,4 +314,5 @@ async def unban(interaction: nextcord.Interaction, member: nextcord.Member):
             await interaction.send(f"Unbanned {member}.")
         except:
             await interaction.send(f"{member} is not banned.")
+
 client.run("TOKEN_GOES_HERE")
