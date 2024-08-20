@@ -68,10 +68,10 @@ async def on_message(message):
         for server in serverdb:
             await send_message_to_servers(message, server)
 async def send_message_to_servers(message, server):
-        embed = nextcord.Embed(title=f"Message by {message.author}")
         if str(message.channel.id) == str(serverdb[server]["cgcchannel"]):
             for server in serverdb:
                 try:
+                    embed = nextcord.Embed(title=f"Message by {message.author}")
                     channel = client.get_channel(int(serverdb[server]["cgcchannel"]))
                     embed.description = message.content
                     if str(message.author.id) == cgcdb["owner"]:
