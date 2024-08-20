@@ -66,32 +66,34 @@ async def on_ready():
 async def on_message(message):
     if not message.author.bot and not message.content.startswith("/") and not str(message.author.id) in cgcdb["bans"]:
         for server in serverdb:
-            embed = nextcord.Embed(title=f"Message by {message.author}")
-            if str(message.channel.id) == str(serverdb[server]["cgcchannel"]):
-                for server in serverdb:
-                    try:
-                        channel = client.get_channel(int(serverdb[server]["cgcchannel"]))
-                        embed.description = message.content
-                        if str(message.author.id) == cgcdb["owner"]:
-                            embed.set_footer(text=f"{message.author} - Owner - {message.channel.guild.name}")
-                        elif str(message.author.id) in cgcdb["staff"]:
-                            embed.set_footer(text=f"{message.author} - Staff - {message.channel.guild.name}")
-                        else:
-                            embed.set_footer(text=f"{message.author} - {message.channel.guild.name}")                        
-                        if message.reference:
-                            reference = await message.channel.fetch_message(message.reference.message_id)
-                            if reference.embeds:
-                                embed.add_field(name=f"Original message by {reference.embeds[0].title.split(' ')[-1]}", value=reference.embeds[0].description)
-                            else:
-                                embed.add_field(name=f"Original message by {reference.author}", value=reference.content)
-                        await channel.send(embed=embed)
-                    except Exception as excp:
-                        print(excp)
-                        pass
+            await send_message_to_servers(message)
+async def send_message_to_servers(message):
+        embed = nextcord.Embed(title=f"Message by {message.author}")
+        if str(message.channel.id) == str(serverdb[server]["cgcchannel"]):
+            for server in serverdb:
                 try:
-                    await message.delete()
-                except:
+                    channel = client.get_channel(int(serverdb[server]["cgcchannel"]))
+                    embed.description = message.content
+                    if str(message.author.id) == cgcdb["owner"]:
+                        embed.set_footer(text=f"{message.author} - Owner - {message.channel.guild.name}")
+                    elif str(message.author.id) in cgcdb["staff"]:
+                        embed.set_footer(text=f"{message.author} - Staff - {message.channel.guild.name}")
+                    else:
+                        embed.set_footer(text=f"{message.author} - {message.channel.guild.name}")                        
+                    if message.reference:
+                        reference = await message.channel.fetch_message(message.reference.message_id)
+                        if reference.embeds:
+                            embed.add_field(name=f"Original message by {reference.embeds[0].title.split(' ')[-1]}", value=reference.embeds[0].description)
+                        else:
+                            embed.add_field(name=f"Original message by {reference.author}", value=reference.content)
+                    await channel.send(embed=embed)
+                except Exception as excp:
+                    print(excp)
                     pass
+            try:
+                await message.delete()
+            except:
+                pass
 @client.slash_command(name="ping", description="Replies with pong!")
 async def ping(interaction: nextcord.Interaction):
     await interaction.response.send_message(f"Pong 🏓 {client.latency * 1000:.2f}ms")
