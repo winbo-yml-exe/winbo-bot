@@ -1,5 +1,5 @@
 # Winbo Discord bot
-A bot coded in Nextcord. Currently in beta phase.
+A bot coded in Nextcord.
 
 ### Notes:
 
