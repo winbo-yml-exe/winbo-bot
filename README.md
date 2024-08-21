@@ -1,5 +1,9 @@
 # Winbo Discord bot
-A bot coded in Nextcord.
+<<<<<<< HEAD
+A bot coded in Nextcord. Currently in alpha phase.
+=======
+A bot coded in Nextcord. Currently in alpha phase.
+>>>>>>> parent of 08c00c2 (Update README.md)
 
 ### Notes:
 
