@@ -5,6 +5,11 @@ import glob
 from pathlib import Path
 import nextcord
 from nextcord.ext import commands
+import platform
+import psutil
+from datetime import datetime
+import requests
+
 intents = nextcord.Intents.all()
 client = commands.Bot(intents=intents)
 serverdb = {}
@@ -18,6 +23,20 @@ sad_stories = [
     "Winbo looked at the last photo taken with his family before they drifted apart. The image was a bittersweet memory of happier times.",
     "Winbo’s phone remained silent, filled with messages from friends he could no longer reach. The emptiness of unreturned calls was deafening."
 ]
+async def getairesponse(question):
+    url = 'https://gpt4o-kohl.vercel.app/chat'
+    payload = {
+        'message': question
+    }
+    headers = {
+        'Content-Type': 'application/json'
+    }
+    response = requests.post(url, json=payload, headers=headers)
+    if response.status_code == 200:
+        data = response.json()
+        return data.get('response', 'noresponse')
+    else:
+        return f"err-{response.status_code}-{response.text}"
 try:
     if not os.path.isfile("serverdb.json"):
         with open("serverdb.json", "w", encoding="utf-8") as sdbfile:
@@ -222,6 +241,23 @@ async def warns(interaction: nextcord.Interaction, member: nextcord.Member):
         serverdb[str(interaction.guild.id)]["warns"][str(member.id)] = []
     embed = nextcord.Embed(color=nextcord.Colour.red(), title=f"{member}'s warnings ({len(serverdb[str(interaction.guild.id)]['warns'][str(member.id)])})", description=", ".join(serverdb[str(interaction.guild.id)]['warns'][str(member.id)]))
     await interaction.send(embed=embed)
+@client.slash_command(name="askai", description="Ask GPT-4o a question (uses steeldev's API)")
+async def askai(interaction: nextcord.Interaction, prompt: str):
+    await interaction.response.defer()
+    response = await getairesponse(prompt)
+    if response.split("-")[0] == "err":
+        splitresponse = response.split("-")
+        embed = nextcord.Embed(color=nextcord.Color.red(), title="An error occurred")
+        embed.add_field(name=f"Response code:{splitresponse[1]}")
+        embed.add_field(name=f"Response: {splitresponse[2]}")
+        embed.set_footer(text="DM either \"winbo_the_dev\" or \"tolino0\" about this.")
+        await interaction.send(embed=embed)
+    elif response == "noresponse":
+        embed = nextcord.Embed(color=nextcord.Color.red(), title="An error occurred", description="No response by the API.")
+        embed.set_footer(text="DM either \"winbo_the_dev\" or \"tolino0\" about this.")
+        await interaction.send(embed=embed)
+    else:
+        await interaction.send(f"GPT-4o's response: {response}")
 
 @client.slash_command(name="unwarn", description="Removes a warn from a member")
 async def unwarn(interaction: nextcord.Interaction, member: nextcord.Member, warningreason: str):
