@@ -26,7 +26,8 @@ sad_stories = [
 async def getairesponse(question):
     url = 'https://gpt4o-kohl.vercel.app/chat'
     payload = {
-        'message': question
+        'message': question,
+        'system_prompt': 'You are Winbo\'s bot. An AI based on OpenAI\'s ChatGPT 4o and make to provide users with things a normal AI would. Your knowledge goes up to August 2023. You reply in a fun, but still a little bit professional way. If the user asks for things like a Nextcord bot\, assume they already have the enviroment set up.'
     }
     headers = {
         'Content-Type': 'application/json'
