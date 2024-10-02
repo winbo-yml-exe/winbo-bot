@@ -49,8 +49,8 @@ log_channels = load_log_channels()
 
 async def getairesponse(prompt, **kwargs):
     url = "https://naviac-api.onrender.com/generate-response"
-    username = "winbo"
-    token = "eyJ1c2VybmFtZSI6IndpbmJvIn0.ZuVibg.oHZrxGAknG1WbrRFkwUAtlFDpR8"
+    username = "NAVIAC_USERNAME"
+    token = "NAVIAC_TOKEN"
     reply = kwargs.get('reply', '')
     user = kwargs.get('user', '')
     server = kwargs.get('server', '')
