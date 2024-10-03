@@ -28,25 +28,6 @@ sad_stories = [
     "Winbo looked at the last photo taken with his family before they drifted apart. The image was a bittersweet memory of happier times.",
     "Winbo’s phone remained silent, filled with messages from friends he could no longer reach. The emptiness of unreturned calls was deafening."
 ]
-
-LOG_CHANNELS_FILE = 'log_channels.json'
-
-def load_log_channels():
-    if not os.path.isfile(LOG_CHANNELS_FILE):
-        create_default_log_channels_file()
-    with open(LOG_CHANNELS_FILE, 'r') as f:
-        return json.load(f)
-
-def create_default_log_channels_file():
-    with open(LOG_CHANNELS_FILE, 'w') as f:
-        json.dump({}, f)
-
-def save_log_channels(log_channels):
-    with open(LOG_CHANNELS_FILE, 'w') as f:
-        json.dump(log_channels, f)
-
-log_channels = load_log_channels()
-
 async def getairesponse(prompt, **kwargs):
     url = "https://naviac-api.onrender.com/generate-response"
     username = "NAVIAC_USERNAME"
@@ -130,20 +111,6 @@ with open("staff.txt", "r", encoding="utf-8") as stafffile:
 async def on_ready():
     await client.change_presence(status=nextcord.Status.dnd, activity=nextcord.Game(name="/ping"))
     print(f"Logged in as {client.user}")
-
-@client.slash_command(name='setlogchannel', description="Set a channel for logging")
-@commands.has_permissions(manage_guild=True)
-async def set_log_channel(ctx):
-    log_channels[str(ctx.guild.id)] = ctx.channel.id
-    save_log_channels(log_channels)
-    await ctx.send(f'Log channel set to {ctx.channel.name}.')
-
-async def log_to_channel(guild_id, embed):
-    if str(guild_id) in log_channels:
-        log_channel_id = log_channels[str(guild_id)]
-        log_channel = client.get_channel(log_channel_id)
-        if log_channel:
-            await log_channel.send(embed=embed)
 
 @client.slash_command(name="ping", description="Replies with pong!")
 async def ping(interaction: nextcord.Interaction):
@@ -304,162 +271,17 @@ async def askai(interaction: nextcord.Interaction, prompt: str):
         splitresponse = response.split("-")
         embed = nextcord.Embed(color=nextcord.Color.red(), title="An error occurred")
         embed.add_field(name=f"Response code: {splitresponse[1]}", value=f"Response: {splitresponse[2]}")
-        embed.set_footer(text="DM either \"winbo_the_dev\" or \"user0_07161\" about this.")
+        embed.set_footer(text="Report this in https://discord.winbo.is-a.dev")
         await interaction.followup.send(embed=embed)
     else:
         sent_message = await interaction.followup.send(response, wait=True)
         return sent_message
 
 @client.event
-async def on_message_edit(before, after):
-    embed = nextcord.Embed(title="Message Edited", color=nextcord.Color.yellow())
-    embed.add_field(name="User", value=f"{before.author} (ID: {before.author.id})", inline=True)
-    embed.add_field(name="Channel", value=f"{before.channel} (ID: {before.channel.id})", inline=True)
-    embed.add_field(name="Before", value=before.content or "No content", inline=False)
-    embed.add_field(name="After", value=after.content or "No content", inline=False)
-    embed.set_footer(text=f"Message ID: {before.id}")
-    await log_to_channel(before.guild.id, embed)
-
-@client.event
-async def on_message_delete(message):
-    embed = nextcord.Embed(title="Message Deleted", color=nextcord.Color.red())
-    embed.add_field(name="User", value=f"{message.author} (ID: {message.author.id})", inline=True)
-    embed.add_field(name="Channel", value=f"{message.channel} (ID: {message.channel.id})", inline=True)
-    embed.add_field(name="Content", value=message.content or "No content", inline=False)
-    embed.set_footer(text=f"Message ID: {message.id}")
-    await log_to_channel(message.guild.id, embed)
-
-@client.event
-async def on_voice_server_update(guild, data):
-    embed = nextcord.Embed(title="Voice Server Updated", color=nextcord.Color.blue())
-    embed.add_field(name="Guild", value=str(guild.name), inline=True)
-    embed.set_footer(text=f"Guild ID: {guild.id}")
-    await log_to_channel(guild.id, embed)
-
-@client.event
-async def on_member_chunk(members, guild):
-    embed = nextcord.Embed(title="Members Chunked", color=nextcord.Color.purple())
-    embed.add_field(name="Guild", value=str(guild.name), inline=True)
-    embed.add_field(name="Member Count", value=len(members), inline=True)
-    embed.set_footer(text=f"Guild ID: {guild.id}")
-    await log_to_channel(guild.id, embed)
-
-@client.event
-async def on_invite_create(invite):
-    embed = nextcord.Embed(title="Invite Created", color=nextcord.Color.green())
-    embed.add_field(name="Invite Code", value=str(invite.code), inline=True)
-    embed.add_field(name="Channel", value=f"{invite.channel} (ID: {invite.channel.id})", inline=True)
-    embed.set_footer(text=f"Invite ID: {invite.id}")
-    await log_to_channel(invite.guild.id, embed)
-
-@client.event
-async def on_invite_delete(invite):
-    embed = nextcord.Embed(title="Invite Deleted", color=nextcord.Color.red())
-    embed.add_field(name="Invite Code", value=str(invite.code), inline=True)
-    embed.add_field(name="Channel", value=f"{invite.channel} (ID: {invite.channel.id})", inline=True)
-    embed.set_footer(text=f"Invite ID: {invite.id}")
-    await log_to_channel(invite.guild.id, embed)
-
-@client.event
-async def on_webhooks_update(channel):
-    embed = nextcord.Embed(title="Webhooks Updated", color=nextcord.Color.yellow())
-    embed.add_field(name="Channel", value=f"{channel.name} (ID: {channel.id})", inline=True)
-    await log_to_channel(channel.guild.id, embed)
-
-@client.event
-async def on_guild_emojis_update(guild, before, after):
-    embed = nextcord.Embed(title="Emojis Updated", color=nextcord.Color.blue())
-    embed.add_field(name="Guild", value=str(guild.name), inline=True)
-    embed.add_field(name="Emoji Count", value=len(after), inline=True)
-    embed.set_footer(text=f"Guild ID: {guild.id}")
-    await log_to_channel(guild.id, embed)
-
-@client.event
-async def on_member_add(member):
-    embed = nextcord.Embed(title="Member Added", color=nextcord.Color.green())
-    embed.add_field(name="Member", value=f"{member} (ID: {member.id})", inline=True)
-    embed.add_field(name="Guild", value=str(member.guild.name), inline=True)
-    embed.add_field(name="Join Date", value=str(member.joined_at), inline=True)
-    embed.set_footer(text=f"Member ID: {member.id}")
-    await log_to_channel(member.guild.id, embed)
-
-@client.event
-async def on_member_remove(member):
-    embed = nextcord.Embed(title="Member Removed", color=nextcord.Color.red())
-    embed.add_field(name="Member", value=f"{member} (ID: {member.id})", inline=True)
-    embed.add_field(name="Guild", value=str(member.guild.name), inline=True)
-    embed.set_footer(text=f"Member ID: {member.id}")
-    await log_to_channel(member.guild.id, embed)
-
-@client.event
-async def on_message_reaction_add(reaction, user):
-    embed = nextcord.Embed(title="Reaction Added", color=nextcord.Color.green())
-    embed.add_field(name="User", value=f"{user} (ID: {user.id})", inline=True)
-    embed.add_field(name="Channel", value=f"{reaction.message.channel} (ID: {reaction.message.channel.id})", inline=True)
-    embed.add_field(name="Message", value=reaction.message.content or "No content", inline=False)
-    embed.add_field(name="Reaction", value=str(reaction.emoji), inline=True)
-    embed.set_footer(text=f"Message ID: {reaction.message.id}")
-    await log_to_channel(reaction.message.guild.id, embed)
-
-@client.event
-async def on_message_reaction_remove(reaction, user):
-    embed = nextcord.Embed(title="Reaction Removed", color=nextcord.Color.red())
-    embed.add_field(name="User", value=f"{user} (ID: {user.id})", inline=True)
-    embed.add_field(name="Channel", value=f"{reaction.message.channel} (ID: {reaction.message.channel.id})", inline=True)
-    embed.add_field(name="Message", value=reaction.message.content or "No content", inline=False)
-    embed.add_field(name="Reaction", value=str(reaction.emoji), inline=True)
-    embed.set_footer(text=f"Message ID: {reaction.message.id}")
-    await log_to_channel(reaction.message.guild.id, embed)
-
-@client.event
-async def on_guild_role_create(role):
-    embed = nextcord.Embed(title="Role Created", color=nextcord.Color.green())
-    embed.add_field(name="Role", value=str(role.name), inline=True)
-    embed.add_field(name="Guild", value=str(role.guild.name), inline=True)
-    embed.set_footer(text=f"Role ID: {role.id}")
-    await log_to_channel(role.guild.id, embed)
-
-@client.event
-async def on_guild_role_delete(role):
-    embed = nextcord.Embed(title="Role Deleted", color=nextcord.Color.red())
-    embed.add_field(name="Role", value=str(role.name), inline=True)
-    embed.add_field(name="Guild", value=str(role.guild.name), inline=True)
-    embed.set_footer(text=f"Role ID: {role.id}")
-    await log_to_channel(role.guild.id, embed)
-
-@client.event
-async def on_guild_role_update(before, after):
-    embed = nextcord.Embed(title="Role Updated", color=nextcord.Color.yellow())
-    embed.add_field(name="Role", value=str(after.name), inline=True)
-    embed.add_field(name="Guild", value=str(after.guild.name), inline=True)
-    if before.name != after.name:
-        embed.add_field(name="Name Changed", value=f"{before.name} ➔ {after.name}", inline=True)
-    embed.set_footer(text=f"Role ID: {after.id}")
-    await log_to_channel(after.guild.id, embed)
-
-@client.event
-async def on_user_update(before, after):
-    embed = nextcord.Embed(title="User Updated", color=nextcord.Color.yellow())
-    embed.add_field(name="User", value=f"{after} (ID: {after.id})", inline=True)
-    if before.avatar != after.avatar:
-        embed.add_field(name="Avatar Changed", value="Updated", inline=True)
-    await log_to_channel(after.id, embed)
-
-@client.event
-async def on_channel_update(before, after):
-    embed = nextcord.Embed(title="Channel Updated", color=nextcord.Color.yellow())
-    embed.add_field(name="Channel", value=f"{before.name} (ID: {before.id})", inline=True)
-    if before.name != after.name:
-        embed.add_field(name="Name Changed", value=f"{before.name} ➔ {after.name}", inline=True)
-    await log_to_channel(before.guild.id, embed)
-
-@client.event
-async def on_channel_pins_update(channel, last_pin):
-    embed = nextcord.Embed(title="Channel Pins Updated", color=nextcord.Color.blue())
-    embed.add_field(name="Channel", value=f"{channel.name} (ID: {channel.id})", inline=True)
-    embed.add_field(name="Last Pin", value=str(last_pin), inline=True)
-    await log_to_channel(channel.guild.id, embed)
-
+async def on_message(message):
+    if not message.author.bot and not message.content.startswith("/") and str(message.author.id) not in cgcdb["bans"]:
+        for server in serverdb:
+            await send_message_to_servers(message, server)
 @client.event
 async def on_message(message: nextcord.Message):
     if message.reference and message.reference.message_id or client.user in message.mentions and not message.author.bot:
@@ -487,7 +309,7 @@ async def on_message(message: nextcord.Message):
                             splitresponse = response.split("-")
                             embed = nextcord.Embed(color=nextcord.Color.red(), title="An error occurred")
                             embed.add_field(name=f"Response code: {splitresponse[1]}", value=f"Response: {splitresponse[2]}")
-                            embed.set_footer(text="DM either \"winbo_the_dev\" or \"user0_07161\" about this.")
+                            embed.set_footer(text="Report this in https://discord.winbo.is-a.dev")
                             await message.channel.send(embed=embed)
                         else:
                             await message.reply(response)
@@ -498,7 +320,7 @@ async def on_message(message: nextcord.Message):
                         splitresponse = response.split("-")
                         embed = nextcord.Embed(color=nextcord.Color.red(), title="An error occurred")
                         embed.add_field(name=f"Response code: {splitresponse[1]}", value=f"Response: {splitresponse[2]}")
-                        embed.set_footer(text="DM either \"winbo_the_dev\" or \"user0_07161\" about this.")
+                        embed.set_footer(text="Report this in https://discord.winbo.is-a.dev")
                         await message.channel.send(embed=embed)
                     else:
                         await message.reply(response)
