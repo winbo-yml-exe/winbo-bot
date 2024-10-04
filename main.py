@@ -13,7 +13,6 @@ import inspect
 import re
 import ast
 import asyncio
-import logging
 
 intents = nextcord.Intents.all()
 client = commands.Bot(intents=intents)
@@ -277,11 +276,6 @@ async def askai(interaction: nextcord.Interaction, prompt: str):
         sent_message = await interaction.followup.send(response, wait=True)
         return sent_message
 
-@client.event
-async def on_message(message):
-    if not message.author.bot and not message.content.startswith("/") and str(message.author.id) not in cgcdb["bans"]:
-        for server in serverdb:
-            await send_message_to_servers(message, server)
 @client.event
 async def on_message(message: nextcord.Message):
     if message.reference and message.reference.message_id or client.user in message.mentions and not message.author.bot:
