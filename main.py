@@ -111,6 +111,63 @@ async def on_ready():
     await client.change_presence(status=nextcord.Status.dnd, activity=nextcord.Game(name="/ping"))
     print(f"Logged in as {client.user}")
 
+@client.event
+async def on_message(message: discord.Message):
+    if message.author.bot or message.author == client.user:
+        return
+
+    if message.content.startswith("n!"):
+        await client.process_commands(message)
+        return
+
+    if message.reference and message.reference.message_id:
+        original_message = await message.channel.fetch_message(message.reference.message_id)
+        if original_message.author != client.user:
+            return
+    elif client.user in message.mentions:
+        original_message = None
+    else:
+        return
+
+    if original_message and original_message.author == client.user:
+        prompt = message.content
+        async with message.channel.typing():
+            try:
+                response = await getairesponse(
+                    prompt=prompt,
+                    messagehistory=[msg async for msg in message.channel.history(limit=25)],
+                    user=message.author.name,
+                    server=message.guild.name,
+                    reply=f"{original_message.content} by {original_message.author}"
+                )
+            except:
+                response = await getairesponse(
+                    prompt=prompt,
+                    messagehistory=[msg async for msg in message.channel.history(limit=25)],
+                    user=message.author.name,
+                    server=message.guild.name,
+                    reply="No reply"
+                )
+    else:
+        prompt = message.content
+        async with message.channel.typing():
+            response = await getairesponse(
+                prompt=prompt,
+                messagehistory=[msg async for msg in message.channel.history(limit=25)],
+                user=message.author.name,
+                server=message.guild.name,
+                reply="No reply"
+            )
+
+    if response.startswith("err"):
+        splitresponse = response.split("-")
+        embed = discord.Embed(color=discord.Color.red(), title="An error occurred")
+        embed.add_field(name=f"Response code: {splitresponse[1]}", value=f"Response: {splitresponse[2]}")
+        embed.set_footer(text="Report this in https://discord.winbo.is-a.dev")
+        await message.channel.send(embed=embed)
+    else:
+        await message.reply(response)
+
 @client.slash_command(name="ping", description="Replies with pong!")
 async def ping(interaction: nextcord.Interaction):
     await interaction.response.send_message(f"Pong 🏓 {client.latency * 1000:.2f}ms")
@@ -275,52 +332,6 @@ async def askai(interaction: nextcord.Interaction, prompt: str):
     else:
         sent_message = await interaction.followup.send(response, wait=True)
         return sent_message
-
-@client.event
-async def on_message(message: nextcord.Message):
-    if message.reference and message.reference.message_id or client.user in message.mentions and not message.author.bot:
-        async with message.channel.typing():
-            if message.author == client.user:
-                return
-
-            if message.reference and message.reference.message_id or client.user in message.mentions:
-                try:
-                    original_message = await message.channel.fetch_message(message.reference.message_id)
-                except:
-                    if client.user in message.mentions:
-                        original_message = None
-                    else:
-                        pass
-                try:
-                    if original_message.author == client.user:
-                        prompt = message.content
-                        try:
-                            response = await getairesponse(prompt = prompt, messagehistory = [message async for message in message.channel.history(limit=25)], user = message.author.name, server = message.guild.name, reply = f"{original_message.content} by {original_message.author}")
-                        except:
-                            response = await getairesponse(prompt = prompt, messagehistory = [message async for message in message.channel.history(limit=25)], user = message.author.name, server = message.guild.name, reply = f"No reply")
-
-                        if response.startswith("err"):
-                            splitresponse = response.split("-")
-                            embed = nextcord.Embed(color=nextcord.Color.red(), title="An error occurred")
-                            embed.add_field(name=f"Response code: {splitresponse[1]}", value=f"Response: {splitresponse[2]}")
-                            embed.set_footer(text="Report this in https://discord.winbo.is-a.dev")
-                            await message.channel.send(embed=embed)
-                        else:
-                            await message.reply(response)
-                except:
-                    prompt = message.content
-                    response = await getairesponse(prompt = prompt, messagehistory = [message async for message in message.channel.history(limit=25)], user = message.author.name, server = message.guild.name, reply = f"No reply")
-                    if response.startswith("err"):
-                        splitresponse = response.split("-")
-                        embed = nextcord.Embed(color=nextcord.Color.red(), title="An error occurred")
-                        embed.add_field(name=f"Response code: {splitresponse[1]}", value=f"Response: {splitresponse[2]}")
-                        embed.set_footer(text="Report this in https://discord.winbo.is-a.dev")
-                        await message.channel.send(embed=embed)
-                    else:
-                        await message.reply(response)
-            return
-
-        await client.process_commands(message)
 
 @client.slash_command(name="unwarn", description="Removes a warn from a member")
 async def unwarn(interaction: nextcord.Interaction, member: nextcord.Member, warningreason: str):
